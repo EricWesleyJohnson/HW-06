@@ -53,7 +53,7 @@ def main():  # Plain stress approximation
     # stress_resultant = np.array([[8000], [0], [1300], [0], [0], [0]])
 
     # Enter a desired ply orientation angles in degrees here:
-    angle_in_degrees = [0,0,0,0,45,-45,90,90,-45,45,0,0,0,0]
+    angle_in_degrees = [0,0,0,0,0,45,-45,45,-45,90,90,-45,45,-45,45,0,0,0,0,0]
 
     N = len(angle_in_degrees)   # Number of plies
     t_ply = 0.006               # Ply thickness in in
@@ -63,6 +63,11 @@ def main():  # Plain stress approximation
     n_0  = angle_in_degrees.count(0)
     n_45 = 2 * angle_in_degrees.count(45)  # Using symmetry to save on processing resources
     n_90 = angle_in_degrees.count(90)
+
+    # Actual percentages of each ply orientation
+    n_0_percent = n_0/N
+    n_45_percent = n_45/N
+    n_90_percent = n_90/N
 
     # Allowable strains
     e_xxc = 0.004          # Allowable normal strain
@@ -139,10 +144,23 @@ def main():  # Plain stress approximation
     FS_shear = float(N_xy / stress_resultant[2])
 
     print("Total number of plies :" + format(N,'>6d'))
+
     print('\nNumber of plies in each ply group:')
     print('Plies at 0\N{DEGREE SIGN}:' + format(n_0,'>7d'))
     print('Plies at 45\N{DEGREE SIGN}:' + format(n_45,'>6d'))
     print('Plies at 90\N{DEGREE SIGN}:' + format(n_90,'>6d'))
+
+    print('\nPercent of plies in each ply group:')
+    print('Plies at 0\N{DEGREE SIGN}:' + format(n_0_percent,'>7.2f'))
+    print('Plies at 45\N{DEGREE SIGN}:' + format(n_45_percent,'>6.2f'))
+    print('Plies at 90\N{DEGREE SIGN}:' + format(n_90_percent,'>6.2f'))
+
+    print('\nE_xx:' + format(E_xx,'>14.3e'))
+    print('G_xy:' + format(G_xy,'>14.3e'))
+
+    print('\nN_xx for this iteration: ' + format(N_xx,'>10.3f'))
+    print('N_xy for this iteration: ' + format(N_xy,'>10.3f'))
+
     print('\nFactor of Safety for N_xx:' + format(FS_axial,'>6.3f'))
     print('Factor of Safety for N_xy:' + format(FS_shear,'>6.3f'))
 

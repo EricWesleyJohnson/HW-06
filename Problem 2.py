@@ -38,22 +38,41 @@ def main():  # Plain stress approximation
     # Enter a desired ply orientation angles in degrees here:
     angle_in_degrees_1 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,45,-45,90,90,90,90,-45,45,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
     angle_in_degrees_2 = [0,0,0,0,0,0,0,0,0,0,0,0,45,-45,45,-45,45,-45,90,90,90,90,-45,45,-45,45,-45,45,0,0,0,0,0,0,0,0,0,0,0,0]
+    angle_in_degrees_3 = [0,0,0,0,0,0,0,0,0,0,45,-45,45,-45,45,-45,45,-45,90,90,90,90,-45,45,-45,45,-45,45,-45,45,0,0,0,0,0,0,0,0,0,0]
+    angle_in_degrees_4 = [0,0,0,0,0,0,0,0,45,-45,45,-45,45,-45,45,-45,45,-45,90,90,90,90,-45,45,-45,45,-45,45,-45,45,-45,45,0,0,0,0,0,0,0,0]
+    angle_in_degrees_5 = [0,0,0,0,0,0,45,-45,45,-45,45,-45,45,-45,45,-45,90,90,90,90,90,90,90,90,-45,45,-45,45,-45,45,-45,45,-45,45,0,0,0,0,0,0]
+    angle_in_degrees_6 = [0,0,45,-45,45,-45,45,-45,45,-45,45,-45,45,-45,45,-45,45,-45,90,90,90,90,-45,45,-45,45,-45,45,-45,45,-45,45,-45,45,-45,45,-45,45,0,0]
 
-    N = len(angle_in_degrees)   # number of plies
-    t_ply = 0.005               # ply thickness in m
-    t_LAM = t_ply * N           # laminate thickness in m
+    angle_in_degrees = [angle_in_degrees_1,angle_in_degrees_2,angle_in_degrees_3,angle_in_degrees_4,angle_in_degrees_5,angle_in_degrees_6]
+
+    # number of plies
+    N = [0] * len(angle_in_degrees)
+    for i in range(6):
+        N[i] = len(angle_in_degrees[i])
+
+    t_ply = 0.005   # ply thickness in m
+
+    # laminate thickness in m
+    h = [0]*len(angle_in_degrees)
+    for i in range(len(N)):
+        h[i] = t_ply * len(angle_in_degrees[i])
 
     # Distance from laminate mid-plane to out surfaces of plies)
-    z0 = -t_LAM/2
-    z = [0] * (N)
-    for i in range(N):
-        z[i] = (-t_LAM / 2) + ((i+1) * t_ply)
+    # z0 = -h/2         # Unused but included for my own clarity
+    z = [[0]*N[0]] * len(angle_in_degrees)
+    for i in range(len(angle_in_degrees)):
+        for j in range(N[i]):
+            z[j] = (-h[j] / 2) + ((j+1) * t_ply)
 
+    '''
     # Distance from laminate mid-plane to mid-planes of plies
-    z_mid_plane = [0] * N
-    for i in range(N):
-        z_mid_plane[i] = (-t_LAM / 2) - (t_ply/2) + ((i+1) * t_ply)
+    z_mid_plane = [[0]*len(N)] * len(angle_in_degrees)
+    print(z_mid_plane)
 
+    for i in range(N):
+        z_mid_plane[i] = (-h / 2) - (t_ply/2) + ((i+1) * t_ply)
+
+    
     # Ply orientation angle translated to radians to simplify equations below
     angle = [0] * N
     for i in range(N):
@@ -83,13 +102,6 @@ def main():  # Plain stress approximation
 
     # The local/lamina stiffness matrix, pg 107
     Q_array = lg.inv(S)  # The inverse of the S matrix
-    ''' # Calculated manually, not necessary if S matrix is known, pg 110
-    Q11 = E11/(1-V12*V21)
-    Q12 = (V21*E11)/(1-V12*V21)
-    Q21 = (V12*E22)/(1-V12*V21)
-    Q22 = E22/(1-V12*V21)
-    Q = np.array([[Q11, Q12, 0], [Q21, Q22, 0], [0, 0, G12]])
-    '''
 
     # The global/laminate stiffness and compliance matrices
     Q_bar_array = [0] * N
@@ -224,6 +236,6 @@ def main():  # Plain stress approximation
     print("\nThese are the Critical Loads for first ply failure:")
     print("N_xx = " + str(np.round(abs(min(N_MS_xxc[0], N_TW_xxc[0])), 2)))
     print("M_xy = " + str(np.round(abs(min(M_MS_xxc[0], M_TW_xxc[0], key=abs)), 2)))
-
+    '''
 
 main()
