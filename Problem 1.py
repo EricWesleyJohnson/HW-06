@@ -6,15 +6,7 @@ from math import sin
 from math import cos
 from math import tan
 
-def round_up(n, decimals=0):
-    multiplier = 10 ** decimals
-    return int(math.ceil(n * multiplier) / multiplier)
-
-def Reverse(lst):
-    return [i for i in reversed(lst)]
-
 def main():  # Plain stress approximation
-    '''
     # Independent material properties for AS/3501 graphite epoxy in US units
     E11  = 20.01 * (10**6) # psi
     E22  = 1.3   * (10**6) # psi
@@ -28,9 +20,9 @@ def main():  # Plain stress approximation
     STt  = 7.50  * (10**3)  # psi
     STc  = 29.9  * (10**3)  # psi
     SLTs = 13.5  * (10**3)  # psi
-    '''
 
-    # THESE WERE USED FOR CALCULATION VALIDATION BASED ON EXAMPLE pg226 FROM THE FILES SECTION ON CANVAS
+    '''
+    # THESE WERE USED FOR CALCULATION VALIDATION BASED ON EXAMPLE pg253 2 FROM THE FILES SECTION ON CANVAS
     # Independent material properties for T300/5208 graphite epoxy in US units
     E11  = 26.25 * (10**6)  # psi
     E22  = 1.49  * (10**6)  # psi
@@ -44,7 +36,7 @@ def main():  # Plain stress approximation
     STt  = 5.80  * (10**3)  # psi
     STc  = 35.7  * (10**3)  # psi
     SLTs = 9.86  * (10**3)  # psi
-
+    '''
 
     # Tsai-Wu Coefficients
     F11 = 1 / (SLt*SLc)
@@ -55,23 +47,26 @@ def main():  # Plain stress approximation
     F2  = (1/STt) - (1/STc)
 
     # [Nxx, Nyy, Nxy, Mxx, Myy, Mxy] in lb/in & in-lb/in
-    # stress_resultant = np.array([[4000], [0], [800], [0], [0], [0]])
-    stress_resultant = np.array([[8000], [0], [1300], [0], [0], [0]])
+    stress_resultant = np.array([[4000], [0], [800], [0], [0], [0]])
 
-    N = 40          # Number of plies
-    t_ply = 0.005   # Ply thickness in in
+    # # Used to verify code based on Example 253 2
+    # stress_resultant = np.array([[8000], [0], [1300], [0], [0], [0]])
 
-    # Allowable strains
-    e_xxc = 0.0035          # Allowable normal strain
-    gamma_xyc = 0.004       # Allowable shear strain
+    # Enter a desired ply orientation angles in degrees here:
+    angle_in_degrees = [0,0,0,0,45,-45,90,90,-45,45,0,0,0,0]
+
+    N = len(angle_in_degrees)   # Number of plies
+    t_ply = 0.006               # Ply thickness in in
+    h = N * t_ply               # Laminate thickness in inches
 
     # Number of at each angle
-    n_0  = round_up(N * 0.6, 0)
-    n_45 = round_up(N * 0.3, 0)
-    n_90 = round_up(N * 0.1, 0)
+    n_0  = angle_in_degrees.count(0)
+    n_45 = 2 * angle_in_degrees.count(45)  # Using symmetry to save on processing resources
+    n_90 = angle_in_degrees.count(90)
 
-    # Laminate thickness in inches
-    h = round(t_ply*n_0 + t_ply*n_45 + t_ply*n_90, 1)
+    # Allowable strains
+    e_xxc = 0.004          # Allowable normal strain
+    gamma_xyc = 0.005       # Allowable shear strain
 
     # Distance from laminate mid-plane to out surfaces of plies)
     z0 = -h/2
@@ -83,14 +78,6 @@ def main():  # Plain stress approximation
     z_mid_plane = [0] * N
     for i in range(N):
         z_mid_plane[i] = (-h / 2) - (t_ply/2) + ((i+1) * t_ply)
-
-    # Populating the angles list based on guessed N (total plies) and percentage of each orientation
-    angle_in_degrees = []
-    angle_in_degrees.extend([0] * (n_0//2))
-    angle_in_degrees.extend([45] * (n_45//4))
-    angle_in_degrees.extend([-45] * (n_45//4))
-    angle_in_degrees.extend([90] * (n_90//2))
-    angle_in_degrees.extend(Reverse(angle_in_degrees))
 
     # Ply orientation angle translated to radians to simplify equations below
     angle = [0] * N
@@ -121,13 +108,6 @@ def main():  # Plain stress approximation
 
     # The local/lamina stiffness matrix, pg 107
     Q_array = lg.inv(S)  # The inverse of the S matrix
-    ''' # Calculated manually, not necessary if S matrix is known, pg 110
-    Q11 = E11/(1-V12*V21)
-    Q12 = (V21*E11)/(1-V12*V21)
-    Q21 = (V12*E22)/(1-V12*V21)
-    Q22 = E22/(1-V12*V21)
-    Q = np.array([[Q11, Q12, 0], [Q21, Q22, 0], [0, 0, G12]])
-    '''
 
     # The global/laminate stiffness and compliance matrices
     Q_bar_array = [0] * N
@@ -138,134 +118,33 @@ def main():  # Plain stress approximation
     for i in range(N):
         A_array += Q_bar_array[i] * t_ply
 
-    B_array = [[0]*3]*3
-    for i in range(N):
-        B_array += (1/2) * (Q_bar_array[i] * ((z[i]**2) - ((z[i] - t_ply)**2)))
-
-    D_array = [[0] * 3] * 3
-    for i in range(N):
-        D_array += (1/3) * (Q_bar_array[i] * ((z[i] ** 3) - ((z[i] - t_ply) ** 3)))
-
-    ABD_array = np.array([[A_array[0][0], A_array[0][1], A_array[0][2], B_array[0][0], B_array[0][1], B_array[0][2]],
-                          [A_array[1][0], A_array[1][1], A_array[1][2], B_array[1][0], B_array[1][1], B_array[1][2]],
-                          [A_array[2][0], A_array[2][1], A_array[2][2], B_array[2][0], B_array[2][1], B_array[2][2]],
-                          [B_array[0][0], B_array[0][1], B_array[0][2], D_array[0][0], D_array[0][1], D_array[0][2]],
-                          [B_array[1][0], B_array[1][1], B_array[1][2], D_array[1][0], D_array[1][1], D_array[1][2]],
-                          [B_array[2][0], B_array[2][1], B_array[2][2], D_array[2][0], D_array[2][1], D_array[2][2]]])
-
-    ABD_inverse_array = lg.inv(ABD_array)
-
-    # Calculating the mid-plane strains and curvatures
-    mid_plane_strains_and_curvatures_array = mm(lg.inv(ABD_array), stress_resultant)
-
     # Transforming numpy array into lists for ease of formatting
     Q = Q_array.tolist()
     Q_bar = [0] * N
     for i in range(N):
         Q_bar[i] = Q_bar_array[i].tolist()
     A = A_array.tolist()
-    B = B_array.tolist()
-    D = D_array.tolist()
-    ABD_inverse = ABD_inverse_array.tolist()
-    mid_plane_strains_and_curvatures = mid_plane_strains_and_curvatures_array.tolist()
+
 
     # Calculating E_xx and G_xy
     E_xx = (A[0][0]/h) * (1 - ((A[0][1]**2)/(A[0][0]*A[1][1])))
-    print(E_xx)
+    G_xy = A[2][2] / h
 
-    # Parsing the Mid-plane strains and curvatures apart
-    mid_plane_strains = np.array([[mid_plane_strains_and_curvatures[0][0]], [mid_plane_strains_and_curvatures[1][0]], [mid_plane_strains_and_curvatures[2][0]]])
-    curvatures = np.array([[mid_plane_strains_and_curvatures[3][0]], [mid_plane_strains_and_curvatures[4][0]], [mid_plane_strains_and_curvatures[5][0]]])
+    # Calculating Nxx & Nxy
+    N_xx = E_xx * e_xxc * h
+    N_xy = G_xy * gamma_xyc * h
 
-    # Global Strains at mid-plane of each ply
-    global_strains = [[[0]]*3]*N
-    for i in range(N):
-        global_strains[i] = mid_plane_strains + z_mid_plane[i]*curvatures
+    # Factors of safety
+    FS_axial = float(N_xx / stress_resultant[0])
+    FS_shear = float(N_xy / stress_resultant[2])
 
-    # Global Stresses at mid-plane of each ply
-    global_stresses = [[[0]]*3]*N
-    for i in range(N):
-        global_stresses[i] = mm(Q_bar[i], global_strains[i])
-
-    # Local strains
-    local_strains = [[[0]]*3]*N
-    for i in range(N):
-        local_strains[i] = mm(T_hat[i], global_strains[i])
-
-    # Local stresses
-    local_stresses = [[[0]]*3]*N
-    for i in range(N):
-        local_stresses[i] = mm(Q, local_strains[i])
-
-    # Strength Ratios for Max Stress Failure Theory
-    R_sig_11 = [0]*N
-    for i in range(N):
-        R_sig_11[i] = SLt / math.fabs(local_stresses[i][0])
-
-    R_sig_22 = [0] * N
-    for i in range(N):
-        R_sig_22[i] = STt / math.fabs(local_stresses[i][1])
-
-    R_tau_12 = [0] * N
-    for i in range(N):
-        R_tau_12[i] = SLTs/ math.fabs(local_stresses[i][2])
-
-    R_MS = [0]*N
-    for i in range(N):
-        R_MS[i] = min(R_sig_11[i], R_sig_22[i], R_tau_12[i])
-
-    # Max stress critical loads
-    N_MS_xxc = [0]*N
-    for i in range(N):
-        N_MS_xxc[i] = R_MS[i] * stress_resultant[0]
-
-    M_MS_xxc = [0] * N
-    for i in range(N):
-        M_MS_xxc[i] = R_MS[i] * stress_resultant[5]
-
-    # Define Tsai-Wu quadratic function coefficients (aR^2 + bR + cc = 0)
-    a = [0]*N
-    for i in range(N):
-        a[i] = (F11*(local_stresses[i][0]**2)) + (2*F12*local_stresses[i][0]*local_stresses[i][1]) + (F22*(local_stresses[i][1]**2)) + (F66*(local_stresses[i][2]**2))
-
-    b = [0]*N
-    for i in range(N):
-        b[i] = (F1*local_stresses[i][0]) + (F2*local_stresses[i][1])
-
-    cc = [-1]*N
-
-    # Strength Ratios for Tsai-Wu Criteria
-    R_1_array = [0]*N
-    for i in range(N):
-        R_1_array[i] = (-b[i]+math.sqrt((b[i]**2)-4*a[i]*cc[i])) / (2*a[i])
-
-    R_2 = [0] * N
-    for i in range(N):
-        R_2[i] = (-b[i] - math.sqrt((b[i] ** 2) - 4 * a[i] * cc[i])) / (2 * a[i])
-
-    R_1 = [0]*N
-    for i in range(N):
-        R_1[i] = R_1_array[i].tolist()
-    R_TW = min(R_1)
-
-    # Tsai-Wu critical loads
-    N_TW_xxc = R_TW * stress_resultant[0]
-    M_TW_xxc = R_TW * stress_resultant[5]
-
-    # # Printing the Strength Ratio for Max Stress Failure
-    # print("This is the Strength Ratio for first ply failure under Max Stress Failure Criterion:")
-    # print("R\N{LATIN SUBSCRIPT SMALL LETTER M}\N{LATIN SUBSCRIPT SMALL LETTER S} = " + str(round(min(R_MS, key=abs), 3)))
-    # print("# of ply that fails first: " + str(R_MS.index(min(R_MS)) + 1))
-    #
-    # # Printing the Strength Ratio for Tsai-Wu Failure
-    # print("\nThis is the Strength Ratio for the first ply failure under Tsai-Wu Failure Criterion:")
-    # print("R_TW = " + str(np.round(abs(min(R_TW, key=abs)), 3)))
-    # print("# of ply that fails first: " + str(R_1.index(min(R_1)) + 1))
-    #
-    # # Printing the Critical loads
-    # print("\nThese are the Critical Loads for first ply failure:")
-    # print("N_xx = " + str(np.round(abs(min(N_MS_xxc[0], N_TW_xxc[0])), 2)))
-    # print("M_xy = " + str(np.round(abs(min(M_MS_xxc[0], M_TW_xxc[0], key=abs)), 2)))
+    print("Total number of plies :" + format(N,'>6d'))
+    print('\nNumber of plies in each ply group:')
+    print('Plies at 0\N{DEGREE SIGN}:' + format(n_0,'>7d'))
+    print('Plies at 45\N{DEGREE SIGN}:' + format(n_45,'>6d'))
+    print('Plies at 90\N{DEGREE SIGN}:' + format(n_90,'>6d'))
+    print('\nFactor of Safety for N_xx:' + format(FS_axial,'>6.3f'))
+    print('Factor of Safety for N_xy:' + format(FS_shear,'>6.3f'))
 
 
 main()

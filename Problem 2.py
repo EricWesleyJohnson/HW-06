@@ -6,44 +6,23 @@ from math import sin
 from math import cos
 from math import tan
 
+def Reverse(lst):
+    return [i for i in reversed(lst)]
 
 def main():  # Plain stress approximation
-    # Independent material properties for AS/3501 graphite epoxy in SI units
-    # E11 = 138  *(10**9)   # GPa
-    # E22 = 8.96 *(10**9)   # GPa
-    # V12 = 0.3             # unit-less
-    # G12 = 7.1  *(10**9)   # GPa
-
     # Independent material properties for AS/3501 graphite epoxy in US units
-    E11  = 20.01 * (10**6) # psi
-    E22  = 1.3   * (10**6) # psi
-    V12  = 0.3             # unit-less
-    V21 = (V12*E22)/E11    # unit-less
-    G12  = 1.03  * (10**6) # psi
+    E11  = 5.6 * (10**6)    # psi
+    E22  = 1.2 * (10**6)    # psi
+    V12  = 0.26             # unit-less
+    V21 = (V12*E22)/E11     # unit-less
+    G12  = 0.6  * (10**6)   # psi
 
     # Typical strengths of AS/3501 graphite epoxy in US units
-    SLt  = 209.9 * (10**3)  # psi
-    SLc  = 209.9 * (10**3)  # psi
-    STt  = 7.50  * (10**3)  # psi
-    STc  = 29.9  * (10**3)  # psi
-    SLTs = 13.5  * (10**3)  # psi
-
-    '''
-    THESE WERE USED FOR CALCULATION VALIDATION BASED ON EXAMPLE pg226 FROM THE FILES SECTION ON CANVAS
-    # Independent material properties for T300/5208 graphite epoxy in US units
-    # E11  = 26.25 * (10**6)  # psi
-    # E22  = 1.49  * (10**6)  # psi
-    # V12  = 0.28             # unit-less
-    # V21 = (V12*E22)/E11     # unit-less
-    # G12  = 1.04  * (10**6)  # psi
-    #
-    # # Typical strengths of T300/5208 graphite epoxy in US units
-    # SLt  = 217.5 * (10**3)  # psi
-    # SLc  = 217.5 * (10**3)  # psi
-    # STt  = 5.80  * (10**3)  # psi
-    # STc  = 35.7  * (10**3)  # psi
-    # SLTs = 9.86  * (10**3)  # psi
-    '''
+    SLt  = 154 * (10**3)    # psi
+    SLc  = 88.5 * (10**3)   # psi
+    STt  = 4.5  * (10**3)   # psi
+    STc  = 17.1  * (10**3)  # psi
+    SLTs = 10.4  * (10**3)  # psi
 
     # Tsai-Wu Coefficients
     F11 = 1 / (SLt*SLc)
@@ -53,12 +32,16 @@ def main():  # Plain stress approximation
     F1  = (1/SLt) - (1/SLc)
     F2  = (1/STt) - (1/STc)
 
-    # [Nxx, Nyy, Nxy, Mxx, Myy, Mxy] in N/m & N-m/m
+    # [Nxx, Nyy, Nxy, Mxx, Myy, Mxy] in lb/in & in-lb/in
     stress_resultant = np.array([[100], [0], [0], [0], [0], [-10]])
 
-    N = 8                   # number of plies
-    t_ply = 0.005           # ply thickness in m
-    t_LAM = t_ply * N       # laminate thickness in m
+    # Enter a desired ply orientation angles in degrees here:
+    angle_in_degrees_1 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,45,-45,90,90,90,90,-45,45,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    angle_in_degrees_2 = [0,0,0,0,0,0,0,0,0,0,0,0,45,-45,45,-45,45,-45,90,90,90,90,-45,45,-45,45,-45,45,0,0,0,0,0,0,0,0,0,0,0,0]
+
+    N = len(angle_in_degrees)   # number of plies
+    t_ply = 0.005               # ply thickness in m
+    t_LAM = t_ply * N           # laminate thickness in m
 
     # Distance from laminate mid-plane to out surfaces of plies)
     z0 = -t_LAM/2
@@ -70,9 +53,6 @@ def main():  # Plain stress approximation
     z_mid_plane = [0] * N
     for i in range(N):
         z_mid_plane[i] = (-t_LAM / 2) - (t_ply/2) + ((i+1) * t_ply)
-
-    # Enter a desired ply orientation angle in degrees here:
-    angle_in_degrees = [0, 45, 90, -45, -45, 90, 45, 0]
 
     # Ply orientation angle translated to radians to simplify equations below
     angle = [0] * N
