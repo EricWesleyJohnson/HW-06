@@ -1,3 +1,8 @@
+'''
+Toggle comment ("Ctrl+/" if you're using Pycharm or a few other python IDEs) on lines 43 - 48 to run the different
+lay-ups.  Results needed will print in the console, I believe that's all you should need. Hopefully it's pretty clear.
+'''
+
 import math
 import numpy as np
 from numpy import linalg as lg
@@ -9,15 +14,15 @@ from math import tan
 def Reverse(lst):
     return [i for i in reversed(lst)]
 
-def main():  # Plain stress approximation
-    # Independent material properties for AS/3501 graphite epoxy in US units
+def main():
+    # Independent material properties for Scotchply 1002 in US units
     E11  = 5.6 * (10**6)    # psi
     E22  = 1.2 * (10**6)    # psi
     V12  = 0.26             # unit-less
     V21 = (V12*E22)/E11     # unit-less
     G12  = 0.6  * (10**6)   # psi
 
-    # Typical strengths of AS/3501 graphite epoxy in US units
+    # Typical strengths of Scotchply 1002 in US units
     SLt  = 154 * (10**3)    # psi
     SLc  = 88.5 * (10**3)   # psi
     STt  = 4.5  * (10**3)   # psi
@@ -33,45 +38,40 @@ def main():  # Plain stress approximation
     F2  = (1/STt) - (1/STc)
 
     # [Nxx, Nyy, Nxy, Mxx, Myy, Mxy] in lb/in & in-lb/in
-    stress_resultant = np.array([[100], [0], [0], [0], [0], [-10]])
+    stress_resultant = np.array([[1000], [0], [0], [0], [0], [0]])
 
     # Enter a desired ply orientation angles in degrees here:
-    angle_in_degrees_1 = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,45,-45,90,90,90,90,-45,45,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-    angle_in_degrees_2 = [0,0,0,0,0,0,0,0,0,0,0,0,45,-45,45,-45,45,-45,90,90,90,90,-45,45,-45,45,-45,45,0,0,0,0,0,0,0,0,0,0,0,0]
-    angle_in_degrees_3 = [0,0,0,0,0,0,0,0,0,0,45,-45,45,-45,45,-45,45,-45,90,90,90,90,-45,45,-45,45,-45,45,-45,45,0,0,0,0,0,0,0,0,0,0]
-    angle_in_degrees_4 = [0,0,0,0,0,0,0,0,45,-45,45,-45,45,-45,45,-45,45,-45,90,90,90,90,-45,45,-45,45,-45,45,-45,45,-45,45,0,0,0,0,0,0,0,0]
-    angle_in_degrees_5 = [0,0,0,0,0,0,45,-45,45,-45,45,-45,45,-45,45,-45,90,90,90,90,90,90,90,90,-45,45,-45,45,-45,45,-45,45,-45,45,0,0,0,0,0,0]
-    angle_in_degrees_6 = [0,0,45,-45,45,-45,45,-45,45,-45,45,-45,45,-45,45,-45,45,-45,90,90,90,90,-45,45,-45,45,-45,45,-45,45,-45,45,-45,45,-45,45,-45,45,0,0]
+    angle_in_degrees = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,45,-45,90,90,90,90,-45,45,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    # angle_in_degrees = [0,0,0,0,0,0,0,0,0,0,0,0,45,-45,45,-45,45,-45,90,90,90,90,-45,45,-45,45,-45,45,0,0,0,0,0,0,0,0,0,0,0,0]
+    # angle_in_degrees = [0,0,0,0,0,0,0,0,0,0,45,-45,45,-45,45,-45,45,-45,90,90,90,90,-45,45,-45,45,-45,45,-45,45,0,0,0,0,0,0,0,0,0,0]
+    # angle_in_degrees = [0,0,0,0,0,0,0,0,45,-45,45,-45,45,-45,45,-45,45,-45,90,90,90,90,-45,45,-45,45,-45,45,-45,45,-45,45,0,0,0,0,0,0,0,0]
+    # angle_in_degrees = [0,0,0,0,0,0,45,-45,45,-45,45,-45,45,-45,45,-45,90,90,90,90,90,90,90,90,-45,45,-45,45,-45,45,-45,45,-45,45,0,0,0,0,0,0]
+    # angle_in_degrees = [0,0,45,-45,45,-45,45,-45,45,-45,45,-45,45,-45,45,-45,45,-45,90,90,90,90,-45,45,-45,45,-45,45,-45,45,-45,45,-45,45,-45,45,-45,45,0,0]
 
-    angle_in_degrees = [angle_in_degrees_1,angle_in_degrees_2,angle_in_degrees_3,angle_in_degrees_4,angle_in_degrees_5,angle_in_degrees_6]
+    N = len(angle_in_degrees)     # number of plies
+    t_ply = 0.005                 # ply thickness in m
+    h = t_ply * N
 
-    # number of plies
-    N = [0] * len(angle_in_degrees)
-    for i in range(6):
-        N[i] = len(angle_in_degrees[i])
+    # Number of at each angle
+    n_0  = angle_in_degrees.count(0)
+    n_45 = 2 * angle_in_degrees.count(45)  # Using symmetry to save on processing resources
+    n_90 = angle_in_degrees.count(90)
 
-    t_ply = 0.005   # ply thickness in m
-
-    # laminate thickness in m
-    h = [0]*len(angle_in_degrees)
-    for i in range(len(N)):
-        h[i] = t_ply * len(angle_in_degrees[i])
+    # Actual percentages of each ply group
+    n_0_percent = n_0/N
+    n_45_percent = n_45/N
+    n_90_percent = n_90/N
 
     # Distance from laminate mid-plane to out surfaces of plies)
-    # z0 = -h/2         # Unused but included for my own clarity
-    z = [[0]*N[0]] * len(angle_in_degrees)
-    for i in range(len(angle_in_degrees)):
-        for j in range(N[i]):
-            z[j] = (-h[j] / 2) + ((j+1) * t_ply)
+    z0 = -h/2
+    z = [0] * (N)
+    for i in range(N):
+        z[i] = (-h / 2) + ((i+1) * t_ply)
 
-    '''
     # Distance from laminate mid-plane to mid-planes of plies
-    z_mid_plane = [[0]*len(N)] * len(angle_in_degrees)
-    print(z_mid_plane)
-
+    z_mid_plane = [0] * N
     for i in range(N):
         z_mid_plane[i] = (-h / 2) - (t_ply/2) + ((i+1) * t_ply)
-
     
     # Ply orientation angle translated to radians to simplify equations below
     angle = [0] * N
@@ -167,32 +167,6 @@ def main():  # Plain stress approximation
     for i in range(N):
         local_stresses[i] = mm(Q, local_strains[i])
 
-    # Strength Ratios for Max Stress Failure Theory
-    R_sig_11 = [0]*N
-    for i in range(N):
-        R_sig_11[i] = SLt / math.fabs(local_stresses[i][0])
-
-    R_sig_22 = [0] * N
-    for i in range(N):
-        R_sig_22[i] = STt / math.fabs(local_stresses[i][1])
-
-    R_tau_12 = [0] * N
-    for i in range(N):
-        R_tau_12[i] = SLTs/ math.fabs(local_stresses[i][2])
-
-    R_MS = [0]*N
-    for i in range(N):
-        R_MS[i] = min(R_sig_11[i], R_sig_22[i], R_tau_12[i])
-
-    # Max stress critical loads
-    N_MS_xxc = [0]*N
-    for i in range(N):
-        N_MS_xxc[i] = R_MS[i] * stress_resultant[0]
-
-    M_MS_xxc = [0] * N
-    for i in range(N):
-        M_MS_xxc[i] = R_MS[i] * stress_resultant[5]
-
     # Define Tsai-Wu quadratic function coefficients (aR^2 + bR + cc = 0)
     a = [0]*N
     for i in range(N):
@@ -219,23 +193,33 @@ def main():  # Plain stress approximation
     R_TW = min(R_1)
 
     # Tsai-Wu critical loads
-    N_TW_xxc = R_TW * stress_resultant[0]
-    M_TW_xxc = R_TW * stress_resultant[5]
+    N_TW_xxc = float(R_TW * stress_resultant[0])
 
-    # Printing the Strength Ratio for Max Stress Failure
-    print("This is the Strength Ratio for first ply failure under Max Stress Failure Criterion:")
-    print("R\N{LATIN SUBSCRIPT SMALL LETTER M}\N{LATIN SUBSCRIPT SMALL LETTER S} = " + str(round(min(R_MS, key=abs), 3)))
-    print("# of ply that fails first: " + str(R_MS.index(min(R_MS)) + 1))
+    # Calculating E_xx
+    E_xx = (A[0][0]/h) * (1 - ((A[0][1]**2)/(A[0][0]*A[1][1])))
+
+    # Calculating ε_xx and ε_xxc
+    e_xx = float((stress_resultant[0]) / (E_xx*h))
+    e_xxc = float(e_xx * R_TW[0])
+
+    # Printing Ply Group Percentages
+    print('Percent n_0:' + format(n_0_percent,'>9.2f'))
+    print('Percent n_45:' + format(n_45_percent,'>8.2f'))
+    print('Percent n_90:' + format(n_90_percent,'>8.2f'))
+
+    print("\n# of ply that fails first: " + str(R_1.index(min(R_1)) + 1))
+
+    # Printing the Critical loads
+    print("\nThis is the calculated strain for first ply failure under Tsai-Wu:")
+    print("ε_xx  = " + format(e_xx,'>8.5f'))
 
     # Printing the Strength Ratio for Tsai-Wu Failure
     print("\nThis is the Strength Ratio for the first ply failure under Tsai-Wu Failure Criterion:")
-    print("R_TW = " + str(np.round(abs(min(R_TW, key=abs)), 3)))
-    print("# of ply that fails first: " + str(R_1.index(min(R_1)) + 1))
+    print("R_TW = " + str(np.round(R_TW[0], 3)))
 
     # Printing the Critical loads
-    print("\nThese are the Critical Loads for first ply failure:")
-    print("N_xx = " + str(np.round(abs(min(N_MS_xxc[0], N_TW_xxc[0])), 2)))
-    print("M_xy = " + str(np.round(abs(min(M_MS_xxc[0], M_TW_xxc[0], key=abs)), 2)))
-    '''
+    print("\nThis is the critical strain for first ply failure under Tsai-Wu:")
+    print("ε_xxc = " + format(e_xxc,'>8.5f'))
+
 
 main()

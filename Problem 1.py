@@ -1,3 +1,10 @@
+'''
+Play around with the lay-up values on line 52 to run through iterations on this one.  I'm just leaving it on the one
+I found to be the last one needed but it's all based on initial guesses so you'll want to run through a few.  I left the
+Material properties for the example problem I used to build this so if you want to run through that and check your logic
+it should be pretty easy to toggle comment between that group and the one used in the actual problem.
+'''
+
 import math
 import numpy as np
 from numpy import linalg as lg
@@ -6,7 +13,7 @@ from math import sin
 from math import cos
 from math import tan
 
-def main():  # Plain stress approximation
+def main():
     # Independent material properties for AS/3501 graphite epoxy in US units
     E11  = 20.01 * (10**6) # psi
     E22  = 1.3   * (10**6) # psi
@@ -38,22 +45,11 @@ def main():  # Plain stress approximation
     SLTs = 9.86  * (10**3)  # psi
     '''
 
-    # Tsai-Wu Coefficients
-    F11 = 1 / (SLt*SLc)
-    F22 = 1 / (STt*STc)
-    F12 = (-1/2) * math.sqrt(F11* F22)
-    F66 = 1 / (SLTs**2)
-    F1  = (1/SLt) - (1/SLc)
-    F2  = (1/STt) - (1/STc)
-
     # [Nxx, Nyy, Nxy, Mxx, Myy, Mxy] in lb/in & in-lb/in
     stress_resultant = np.array([[4000], [0], [800], [0], [0], [0]])
 
-    # # Used to verify code based on Example 253 2
-    # stress_resultant = np.array([[8000], [0], [1300], [0], [0], [0]])
-
     # Enter a desired ply orientation angles in degrees here:
-    angle_in_degrees = [0,0,0,0,0,45,-45,45,-45,90,90,-45,45,-45,45,0,0,0,0,0]
+    angle_in_degrees = [0,0,0,0,45,-45,90,90,-45,45,0,0,0,0]
 
     N = len(angle_in_degrees)   # Number of plies
     t_ply = 0.006               # Ply thickness in in
@@ -64,7 +60,7 @@ def main():  # Plain stress approximation
     n_45 = 2 * angle_in_degrees.count(45)  # Using symmetry to save on processing resources
     n_90 = angle_in_degrees.count(90)
 
-    # Actual percentages of each ply orientation
+    # Actual percentages of each ply group
     n_0_percent = n_0/N
     n_45_percent = n_45/N
     n_90_percent = n_90/N
@@ -135,13 +131,13 @@ def main():  # Plain stress approximation
     E_xx = (A[0][0]/h) * (1 - ((A[0][1]**2)/(A[0][0]*A[1][1])))
     G_xy = A[2][2] / h
 
-    # Calculating Nxx & Nxy
-    N_xx = E_xx * e_xxc * h
-    N_xy = G_xy * gamma_xyc * h
+    # Laminate strains
+    e_xx = float(stress_resultant[0] / (E_xx * h))
+    gamma_xy = float(stress_resultant[2] / (G_xy * h))
 
     # Factors of safety
-    FS_axial = float(N_xx / stress_resultant[0])
-    FS_shear = float(N_xy / stress_resultant[2])
+    FS_axial = float(e_xxc / abs(e_xx))
+    FS_shear = float(gamma_xyc / abs(gamma_xy))
 
     print("Total number of plies :" + format(N,'>6d'))
 
@@ -158,11 +154,11 @@ def main():  # Plain stress approximation
     print('\nE_xx:' + format(E_xx,'>14.3e'))
     print('G_xy:' + format(G_xy,'>14.3e'))
 
-    print('\nN_xx for this iteration: ' + format(N_xx,'>10.3f'))
-    print('N_xy for this iteration: ' + format(N_xy,'>10.3f'))
+    print('\ne_xx for this iteration: ' + format(e_xx,'>10.5f'))
+    print('γ_xy for this iteration: ' + format(gamma_xy,'>10.5f'))
 
-    print('\nFactor of Safety for N_xx:' + format(FS_axial,'>6.3f'))
-    print('Factor of Safety for N_xy:' + format(FS_shear,'>6.3f'))
+    print('\nFactor of Safety for N_xx:' + format(FS_axial,'>9.3f'))
+    print('Factor of Safety for N_xy:' + format(FS_shear,'>9.3f'))
 
 
 main()
