@@ -1,5 +1,5 @@
 '''
-Play around with the lay-up values on line 52 to run through iterations on this one.  I'm just leaving it on the one
+Play around with the lay-up values on line 20 to run through iterations on this one.  I'm just leaving it on the one
 I found to be the last one needed but it's all based on initial guesses so you'll want to run through a few.  Use the
 carpet plots to find your values for E_xx and G_xy and plug those in on line 41 & 42
 '''
